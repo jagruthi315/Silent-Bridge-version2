@@ -33,9 +33,7 @@ cap = cv2.VideoCapture(0)
 mp_hands = mp.solutions.hands
 
 hands = mp_hands.Hands(
-     max_num_hands=2,
-    min_detection_confidence=0.7,
-    min_tracking_confidence=0.7
+    max_num_hands=2, min_detection_confidence=0.7, min_tracking_confidence=0.7
 )
 
 # -----------------------------
@@ -64,46 +62,47 @@ while True:
 
     if results.multi_hand_landmarks:
 
+        all_landmarks = []
+
+        # Draw both hands and collect landmarks
         for hand_landmarks in results.multi_hand_landmarks:
 
-            # Draw landmarks
-            mp_draw.draw_landmarks(
-                frame,
-                hand_landmarks,
-                mp_hands.HAND_CONNECTIONS
-            )
-
-            # Extract 126 features
-           
-            row = []
+            mp_draw.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
             for landmark in hand_landmarks.landmark:
-                row.append(landmark.x)
-                row.append(landmark.y)
-                row.append(landmark.z)
 
-            # Pad to 126 features
-            while len(row) < 126:
-                row.append(0)
+                all_landmarks.append(landmark.x)
+                all_landmarks.append(landmark.y)
+                all_landmarks.append(landmark.z)
 
-            # Predict gesture
-            gesture, confidence, probabilities, classes = predict(row)
+        # Make sure we always have 126 features
+        while len(all_landmarks) < 126:
+            all_landmarks.append(0)
 
-            current_time = time.time()
+        # Predict gesture
+        gesture, confidence, probabilities, classes = predict(all_landmarks)
 
-            # Sentence Builder Logic
-            if confidence >= MIN_CONFIDENCE:
+        current_time = time.time()
 
-                if gesture != current_gesture:
-                    current_gesture = gesture
-                    gesture_start_time = current_time
+        # Sentence Builder Logic
+        if confidence >= MIN_CONFIDENCE:
 
-                else:
-                    if current_time - gesture_start_time >= GESTURE_HOLD_TIME:
-                        if gesture != last_added_gesture:
-                            sentence.append(gesture)
-                            print("Added:", gesture)
-                            last_added_gesture = gesture
+            if gesture != current_gesture:
+
+                current_gesture = gesture
+                gesture_start_time = current_time
+
+            else:
+
+                if current_time - gesture_start_time >= GESTURE_HOLD_TIME:
+
+                    if gesture != last_added_gesture:
+
+                        sentence.append(gesture)
+
+                        print("Added:", gesture)
+
+                        last_added_gesture = gesture
 
             # Display current gesture
             cv2.putText(
@@ -113,9 +112,8 @@ while True:
                 cv2.FONT_HERSHEY_SIMPLEX,
                 1,
                 (0, 255, 0),
-                2
+                2,
             )
-
     # Display built sentence
     lines = []
     current_line = ""
@@ -132,15 +130,7 @@ while True:
     y = 100
 
     for line in lines:
-        cv2.putText(
-            frame,
-            line,
-            (10, y),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.7,
-            (255, 0, 0),
-            2
-        )
+        cv2.putText(frame, line, (10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
         y += 35
 
     # Show frame
@@ -149,7 +139,7 @@ while True:
     key = cv2.waitKey(1)
 
     # Clear sentence
-    if key == ord('c'):
+    if key == ord("c"):
         sentence.clear()
         current_gesture = ""
         last_added_gesture = ""
@@ -161,7 +151,7 @@ while True:
         print("New line")
 
     # Quit
-    if key == ord('q') or key == 27:
+    if key == ord("q") or key == 27:
         break
 
 # -----------------------------
