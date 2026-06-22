@@ -85,7 +85,8 @@ while True:
         frame_landmarks.append(0)
 
     # add to sequence
-    sequence.append(frame_landmarks)
+    if results.multi_hand_landmarks:
+        sequence.append(frame_landmarks)
 
     if len(sequence) > SEQ_LEN:
         sequence.pop(0)
